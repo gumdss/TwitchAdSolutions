@@ -64,19 +64,11 @@ twitch-videoad.js text/javascript
         scope.UriAttributeRegex = /URI="([^"]+)"/;
         scope.ClientID = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
         scope.BackupPlayerTypes = [
-            // Order matters: first clean type wins. 'embed' moved to end — field-observed
-            // Twitch returns GQL 'server error' for streamPlaybackAccessToken on embed when
-            // requested from twitch.tv origin, wasting ~200-400ms per break as first-try.
-            // Kept in case it ever succeeds on some channel/user combo.
-            'site',//Source
             'popout',//Source
-            'mobile_web',//Mobile
-            'embed',//Source (unreliable — see note above)
-            // 'autoplay' (360p) removed: when committed as cycle backup, the player gets stuck
-            // in an endless loading circle after the CSAI-only path releases the backup —
-            // autoplay variants don't transition cleanly back to main stream variants.
+            'autoplay',//360p
+            'picture-by-picture-CACHED'//360p (-CACHED is an internal suffix and is removed)
         ];
-        scope.FallbackPlayerType = 'site';// was 'embed' — site is more reliable when all Source types end up ad-laden
+        scope.FallbackPlayerType = 'popout';// was 'embed' — site is more reliable when all Source types end up ad-laden
         scope.ForceAccessTokenPlayerType = 'popout';
         scope.PreferLowQualityBackup = true;// Hybrid safety net for SSAI-heavy breaks: sticky escape hatch (fires after ~8s stuck in all-stripped state) + autoplay (360p) as last-resort backup when all Source types are ad-laden. Default on; set twitchAdSolutions_preferLowQualityBackup=false to disable.
         scope.FastAutoplayFirstTry = true;// Prepend autoplay (360p) to the iteration when the prior break exhausted all 4 Source types — saves ~1.5s of probe buffering on every break. Auto-resets on Source-tier recovery. Default on as of v67.1.0 (every observed channel is CSAI-only-but-marked). Opt-out: twitchAdSolutions_fastAutoplayFirstTry=false.
@@ -2085,7 +2077,7 @@ twitch-videoad.js text/javascript
             }
             if (adBlockDiv != null) {
                 isActivelyStrippingAds = data.isStrippingAdSegments;
-                adBlockDiv.P.textContent = 'Blocking' + (data.isMidroll ? ' midroll' : '') + ' ads' + (data.isStrippingAdSegments ? ' (stripping)' : '') + (data.activeBackupPlayerType ? ' (' + data.activeBackupPlayerType + ')' : '');
+                adBlockDiv.P.textContent = 'Blocking' + (data.isStrippingAdSegments ? ' (stripping)' : '');
                 adBlockDiv.style.display = data.hasAds && playerBufferState.isLive ? 'block' : 'none';
             }
             if (data.hasAds) {
